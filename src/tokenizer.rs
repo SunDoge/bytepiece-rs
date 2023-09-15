@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use aho_corasick::AhoCorasick;
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use once_cell::sync::Lazy;
 use rand::{rngs::ThreadRng, Rng};
 use regex::{Matches, Regex};
 use serde::{Deserialize, Serialize};
 
-pub type Pieces = HashMap<String, (usize, String, usize)>;
+pub type Pieces = HashMap<Vec<u8>, (usize, String, usize)>;
 
 // #[derive(Debug, Deserialize, Serialize)]
 // pub struct Pieces(pub HashMap<String, (usize, String, usize)>);
@@ -23,15 +23,14 @@ pub fn parse_pieces_from_slice(buf: &[u8]) -> Pieces {
     res.into_iter()
         .map(|(key, value)| {
             let new_key = base64.decode_to_vec(key).unwrap();
-            let new_key = unsafe { String::from_utf8_unchecked(new_key) };
             (new_key, value)
         })
         .collect()
 }
 
 pub struct Tokenizer<'a> {
-    piece_to_id: HashMap<&'a str, usize>,
-    id_to_piece: HashMap<usize, &'a str>,
+    piece_to_id: HashMap<&'a [u8], usize>,
+    id_to_piece: HashMap<usize, &'a [u8]>,
     vocab_size: usize,
     values: Vec<f64>,
     ac: AhoCorasick,
@@ -39,21 +38,13 @@ pub struct Tokenizer<'a> {
 
 impl<'a> Tokenizer<'a> {
     pub fn from_dict(pieces: &'a Pieces) -> Self {
-        // let base64 = base64_simd::STANDARD;
-        // let pieces: HashMap<String, &[usize]> = pieces
-        //     .iter()
-        //     .map(|(key, value)| {
-        //         let buf = base64.decode_to_vec(*key).unwrap();
-        //         (String::from_utf8(buf).unwrap(), &value[..])
-        //     })
-        //     .collect();
-
-        let piece_to_id: HashMap<&str, usize> = pieces
+        let piece_to_id: HashMap<&[u8], usize> = pieces
             .iter()
-            .map(|(key, value)| (key.as_str(), value.0))
+            .map(|(key, value)| (key.as_slice(), value.0))
             .collect();
 
-        let id_to_piece: HashMap<usize, &str> = piece_to_id.iter().map(|(k, v)| (*v, *k)).collect();
+        let id_to_piece: HashMap<usize, &[u8]> =
+            piece_to_id.iter().map(|(k, v)| (*v, *k)).collect();
 
         let vocab_size = pieces.len() + 3;
 
@@ -65,7 +56,10 @@ impl<'a> Tokenizer<'a> {
             .map(|vs| (vs.2 as f64).log2() - log_total)
             .collect();
 
-        let ac = AhoCorasick::new(pieces.keys()).unwrap();
+        let ac = AhoCorasick::builder()
+            .match_kind(MatchKind::Standard)
+            .build(pieces.keys())
+            .unwrap();
 
         Self {
             id_to_piece,
@@ -112,11 +106,11 @@ impl<'a> Tokenizer<'a> {
     }
 
     pub fn piece_to_id(&self, p: &str) -> usize {
-        self.piece_to_id[p]
+        self.piece_to_id[p.as_bytes()]
     }
 
     pub fn id_to_piece(&self, i: usize) -> &str {
-        self.id_to_piece[&i]
+        std::str::from_utf8(self.id_to_piece[&i]).unwrap()
     }
 
     pub fn pieces_to_ids(&self, pieces: &[&str]) -> Vec<usize> {
@@ -127,13 +121,17 @@ impl<'a> Tokenizer<'a> {
         ids.into_iter().map(|i| self.id_to_piece(*i)).collect()
     }
 
+    pub fn vocab_size(&self) -> usize {
+        self.vocab_size
+    }
+
     fn process<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
         let mut scores = vec![-std::f64::INFINITY; text.len() + 1];
         scores[0] = 0.0;
 
         let mut routes: Vec<usize> = (0..text.len() + 1).collect();
 
-        for mat in self.ac.find_iter(text) {
+        for mat in self.ac.find_overlapping_iter(text.as_bytes()) {
             dbg!(&mat);
             let start = mat.start();
             let end = mat.end();
@@ -164,6 +162,7 @@ impl<'a> Tokenizer<'a> {
             text_slice = &text[..start];
             end = start;
         }
+        tokens.reverse();
         tokens
     }
 }
