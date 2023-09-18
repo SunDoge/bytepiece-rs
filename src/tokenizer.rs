@@ -1,21 +1,9 @@
 use std::collections::HashMap;
 
-use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
-use once_cell::sync::Lazy;
-use rand::{rngs::ThreadRng, Rng};
-use regex::{Matches, Regex};
-use serde::{Deserialize, Serialize};
+use super::utils::normalize;
+use aho_corasick::{AhoCorasick, MatchKind};
 
 pub type Pieces = HashMap<Vec<u8>, (usize, String, usize)>;
-
-// #[derive(Debug, Deserialize, Serialize)]
-// pub struct Pieces(pub HashMap<String, (usize, String, usize)>);
-
-// impl Pieces {
-//     pub fn from_slice(buf: &[u8]) -> Self {
-//         let pieces: Dict = serde_json::from_slice(buf).unwrap()
-//     }
-// }
 
 pub fn parse_pieces_from_slice(buf: &[u8]) -> Pieces {
     let res: HashMap<&str, (usize, String, usize)> = serde_json::from_slice(buf).unwrap();
@@ -37,7 +25,7 @@ pub struct Tokenizer<'a> {
 }
 
 impl<'a> Tokenizer<'a> {
-    pub fn from_dict(pieces: &'a Pieces) -> Self {
+    pub fn from_pieces(pieces: &'a Pieces) -> Self {
         let piece_to_id: HashMap<&[u8], usize> = pieces
             .iter()
             .map(|(key, value)| (key.as_slice(), value.0))
@@ -132,7 +120,6 @@ impl<'a> Tokenizer<'a> {
         let mut routes: Vec<usize> = (0..text.len() + 1).collect();
 
         for mat in self.ac.find_overlapping_iter(text.as_bytes()) {
-            dbg!(&mat);
             let start = mat.start();
             let end = mat.end();
 
@@ -154,7 +141,7 @@ impl<'a> Tokenizer<'a> {
         let mut text_slice = text;
         let mut end = routes.len() - 1;
         let mut tokens = Vec::new();
-        dbg!(&routes);
+
         while !text_slice.is_empty() {
             let start = routes[end];
             // dbg!(text_slice, start, end);
@@ -172,20 +159,6 @@ fn sigmoid(x: f64) -> f64 {
         1. / (1. + (-x).exp())
     } else {
         1. - 1. / (1. + x.exp())
-    }
-}
-
-fn normalize<'a>(text: &'a str, max_len: usize) -> Vec<&'a str> {
-    if max_len > 0 {
-        let pattern = format!(
-            r".{{,{max_len}}}\n{{1,100}}|.{{1,{max_len}}}",
-            max_len = max_len
-        );
-        let regex = Regex::new(&pattern).unwrap();
-        regex.find_iter(text).map(|mat| mat.as_str()).collect()
-    } else {
-        static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r".*\n+|.+").unwrap());
-        RE.find_iter(text).map(|mat| mat.as_str()).collect()
     }
 }
 
