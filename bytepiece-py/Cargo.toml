@@ -1,11 +1,11 @@
 [package]
-name = "bytepiece_rs"
+name = "bytepiece-py"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "bytepiece_rs"
+name = "bytepiece_py"
 crate-type = ["cdylib"]
 
 [dependencies]

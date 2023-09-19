@@ -4,7 +4,7 @@
 
 [workspace]
 resolver = "2"
-members = ["bytepiece", "bytepiece_rs"]
+members = ["bytepiece", "bytepiece-py"]
 
 
 [workspace.dependencies]
