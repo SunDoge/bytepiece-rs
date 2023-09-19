@@ -12,6 +12,9 @@ fn bench_bytepiece_rs(c: &mut Criterion, text: &str) {
     c.bench_function("bytepiece_rs tokenize", |b| {
         b.iter(|| tokenizer.tokenize(text, -1.0))
     });
+    c.bench_function("bytepiece_rs encode", |b| {
+        b.iter(|| tokenizer.encode(text, false, false, -1.0))
+    });
 }
 
 fn bench_bytepiece(c: &mut Criterion, text: &str) {
@@ -19,6 +22,9 @@ fn bench_bytepiece(c: &mut Criterion, text: &str) {
     let tokenizer = OwnedTokenizer::from_path("../bytepiece_80k.model").unwrap();
     c.bench_function("bytepiece tokenize", |b| {
         b.iter(|| tokenizer.tokenize(text, -1.0))
+    });
+    c.bench_function("bytepiece encode", |b| {
+        b.iter(|| tokenizer.encode(text, false, false, -1.0))
     });
 }
 
