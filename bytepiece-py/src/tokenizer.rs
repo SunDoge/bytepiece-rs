@@ -20,9 +20,8 @@ impl Tokenizer {
 
     #[classmethod]
     fn from_path(_cls: &PyType, path: &str) -> PyResult<Self> {
-        let buf = std::fs::read(path)?;
-        let pieces = parse_pieces_from_slice(&buf);
-        Ok(Self::new(pieces))
+        let tk = OwnedTokenizer::from_path(path).unwrap();
+        Ok(Self { inner: tk })
     }
 
     pub fn vocab_size(&self) -> usize {

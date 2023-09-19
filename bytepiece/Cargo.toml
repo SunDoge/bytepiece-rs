@@ -23,6 +23,10 @@ thiserror = "1.0.48"
 default = []
 
 
-
 [dev-dependencies]
+bytepiece_rs = "0.0.1"
 criterion = "0.5.1"
+
+[[bench]]
+name = "tokenize"
+harness = false

@@ -1,20 +1,21 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use super::utils::normalize;
+use crate::Result;
 use aho_corasick::{AhoCorasick, MatchKind};
 use ouroboros::self_referencing;
 
 pub type Pieces = HashMap<Vec<u8>, (usize, String, usize)>;
 
-pub fn parse_pieces_from_slice(buf: &[u8]) -> Pieces {
-    let res: HashMap<&str, (usize, String, usize)> = serde_json::from_slice(buf).unwrap();
+pub fn parse_pieces_from_slice(buf: &[u8]) -> Result<Pieces> {
+    let dict: HashMap<&str, (usize, String, usize)> = serde_json::from_slice(buf)?;
     let base64 = base64_simd::STANDARD;
-    res.into_iter()
+    dict.into_iter()
         .map(|(key, value)| {
-            let new_key = base64.decode_to_vec(key).unwrap();
-            (new_key, value)
+            let new_key = base64.decode_to_vec(key)?;
+            Ok((new_key, value))
         })
-        .collect()
+        .collect::<Result<HashMap<_, _>>>()
 }
 
 pub trait Tokenize {
@@ -205,6 +206,14 @@ pub fn make_owned_tokenizer(pieces: Pieces) -> OwnedTokenizer {
     }
     .build();
     tokenizer
+}
+
+impl OwnedTokenizer {
+    pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
+        let buf = std::fs::read(path)?;
+        let pieces = parse_pieces_from_slice(&buf)?;
+        Ok(make_owned_tokenizer(pieces))
+    }
 }
 
 #[cfg(test)]
