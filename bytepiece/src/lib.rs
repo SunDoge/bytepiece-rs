@@ -1,3 +1,4 @@
+pub mod common;
 mod error;
 pub mod tokenizer;
 pub mod trainer;

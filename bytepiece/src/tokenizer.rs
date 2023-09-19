@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::utils::normalize;
 use aho_corasick::{AhoCorasick, MatchKind};
+use ouroboros::self_referencing;
 
 pub type Pieces = HashMap<Vec<u8>, (usize, String, usize)>;
 
@@ -16,12 +17,76 @@ pub fn parse_pieces_from_slice(buf: &[u8]) -> Pieces {
         .collect()
 }
 
+pub trait Tokenize {
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str>;
+    fn piece_to_id(&self, p: &str) -> usize;
+    fn id_to_piece(&self, i: usize) -> &str;
+    fn vocab_size(&self) -> usize;
+
+    fn pieces_to_ids(&self, pieces: &[&str]) -> Vec<usize> {
+        pieces.into_iter().map(|p| self.piece_to_id(*p)).collect()
+    }
+
+    fn ids_to_pieces(&self, ids: &[usize]) -> Vec<&str> {
+        ids.into_iter().map(|i| self.id_to_piece(*i)).collect()
+    }
+
+    fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
+        let mut pieces = if add_bos {
+            let mut pieces = vec![1];
+            for p in self.tokenize(text, alpha) {
+                pieces.push(self.piece_to_id(p));
+            }
+            pieces
+        } else {
+            self.tokenize(text, alpha)
+                .into_iter()
+                .map(|p| self.piece_to_id(p))
+                .collect()
+        };
+        if add_eos {
+            pieces.push(2);
+        }
+        pieces
+    }
+
+    fn decode(&self, ids: &[usize]) -> String {
+        let pieces: Vec<&str> = ids
+            .into_iter()
+            .filter(|i| **i > 2)
+            .map(|i| self.id_to_piece(*i))
+            .collect();
+        pieces.join("")
+    }
+}
+
 pub struct Tokenizer<'a> {
     piece_to_id: HashMap<&'a [u8], usize>,
     id_to_piece: HashMap<usize, &'a [u8]>,
     vocab_size: usize,
     values: Vec<f64>,
     ac: AhoCorasick,
+}
+
+impl<'a> Tokenize for Tokenizer<'a> {
+    fn id_to_piece(&self, i: usize) -> &str {
+        std::str::from_utf8(self.id_to_piece[&i]).unwrap()
+    }
+
+    fn piece_to_id(&self, p: &str) -> usize {
+        self.piece_to_id[p.as_bytes()]
+    }
+
+    fn vocab_size(&self) -> usize {
+        self.vocab_size
+    }
+
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
+        normalize(text, 0)
+            .into_iter()
+            .flat_map(|s| self.process(s, alpha))
+            .collect()
+    }
 }
 
 impl<'a> Tokenizer<'a> {
@@ -56,61 +121,6 @@ impl<'a> Tokenizer<'a> {
             values,
             ac,
         }
-    }
-
-    pub fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
-        normalize(text, 0)
-            .into_iter()
-            .flat_map(|s| self.process(s, alpha))
-            .collect()
-    }
-
-    pub fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
-        let mut pieces = if add_bos {
-            let mut pieces = vec![1];
-            for p in self.tokenize(text, alpha) {
-                pieces.push(self.piece_to_id(p));
-            }
-            pieces
-        } else {
-            self.tokenize(text, alpha)
-                .into_iter()
-                .map(|p| self.piece_to_id(p))
-                .collect()
-        };
-        if add_eos {
-            pieces.push(2);
-        }
-        pieces
-    }
-
-    pub fn decode(&self, ids: &[usize]) -> String {
-        let pieces: Vec<&str> = ids
-            .into_iter()
-            .filter(|i| **i > 2)
-            .map(|i| self.id_to_piece(*i))
-            .collect();
-        pieces.join("")
-    }
-
-    pub fn piece_to_id(&self, p: &str) -> usize {
-        self.piece_to_id[p.as_bytes()]
-    }
-
-    pub fn id_to_piece(&self, i: usize) -> &str {
-        std::str::from_utf8(self.id_to_piece[&i]).unwrap()
-    }
-
-    pub fn pieces_to_ids(&self, pieces: &[&str]) -> Vec<usize> {
-        pieces.into_iter().map(|p| self.piece_to_id(*p)).collect()
-    }
-
-    pub fn ids_to_pieces(&self, ids: &[usize]) -> Vec<&str> {
-        ids.into_iter().map(|i| self.id_to_piece(*i)).collect()
-    }
-
-    pub fn vocab_size(&self) -> usize {
-        self.vocab_size
     }
 
     fn process<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
@@ -160,6 +170,41 @@ fn sigmoid(x: f64) -> f64 {
     } else {
         1. - 1. / (1. + x.exp())
     }
+}
+
+#[self_referencing]
+pub struct OwnedTokenizer {
+    pieces: Pieces,
+    #[borrows(pieces)]
+    #[covariant]
+    tokenizer: Tokenizer<'this>,
+}
+
+impl Tokenize for OwnedTokenizer {
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
+        self.borrow_tokenizer().tokenize(text, alpha)
+    }
+
+    fn vocab_size(&self) -> usize {
+        self.borrow_tokenizer().vocab_size()
+    }
+
+    fn id_to_piece(&self, i: usize) -> &str {
+        self.borrow_tokenizer().id_to_piece(i)
+    }
+
+    fn piece_to_id(&self, p: &str) -> usize {
+        self.borrow_tokenizer().piece_to_id(p)
+    }
+}
+
+pub fn make_owned_tokenizer(pieces: Pieces) -> OwnedTokenizer {
+    let tokenizer = OwnedTokenizerBuilder {
+        pieces,
+        tokenizer_builder: |pieces: &Pieces| Tokenizer::from_pieces(pieces),
+    }
+    .build();
+    tokenizer
 }
 
 #[cfg(test)]
