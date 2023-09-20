@@ -3,7 +3,7 @@ use bytepiece::tokenizer::{parse_pieces_from_slice, Tokenize, Tokenizer};
 fn main() -> bytepiece::Result<()> {
     let buf = std::fs::read("../bytepiece_80k.model").unwrap();
     let pieces = parse_pieces_from_slice(&buf)?;
-    let tokenizer = Tokenizer::from_pieces(&pieces);
+    let tokenizer = Tokenizer::from_pieces(&pieces)?;
 
     let text = "hi what is your name";
     dbg!(text);

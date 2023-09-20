@@ -24,7 +24,7 @@ default = []
 
 
 [dev-dependencies]
-bytepiece_rs = "0.0.1"
+bytepiece_rs = "0.0.2"
 criterion = "0.5.1"
 
 [[bench]]

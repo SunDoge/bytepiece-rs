@@ -1,3 +1,4 @@
+use crate::Result;
 use bytepiece::tokenizer::{
     make_owned_tokenizer, parse_pieces_from_slice, OwnedTokenizer, Pieces, Tokenize,
 };
@@ -12,15 +13,15 @@ pub struct Tokenizer {
 #[pymethods]
 impl Tokenizer {
     #[new]
-    fn new(pieces: Pieces) -> Self {
-        Self {
-            inner: make_owned_tokenizer(pieces),
-        }
+    fn new(pieces: Pieces) -> Result<Self> {
+        Ok(Self {
+            inner: make_owned_tokenizer(pieces)?,
+        })
     }
 
     #[classmethod]
-    fn from_path(_cls: &PyType, path: &str) -> PyResult<Self> {
-        let tk = OwnedTokenizer::from_path(path).unwrap();
+    fn from_path(_cls: &PyType, path: &str) -> Result<Self> {
+        let tk = OwnedTokenizer::from_path(path)?;
         Ok(Self { inner: tk })
     }
 

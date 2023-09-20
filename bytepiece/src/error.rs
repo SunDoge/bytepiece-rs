@@ -10,4 +10,7 @@ pub enum Error {
 
     #[error("base64 error: {0}")]
     Base64(#[from] base64_simd::Error),
+
+    #[error("fail to build aho corasick: {0}")]
+    AhoCorasickBuild(#[from] aho_corasick::BuildError),
 }

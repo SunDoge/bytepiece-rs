@@ -1,9 +1,9 @@
-use std::{collections::HashMap, path::Path};
-
 use super::utils::normalize;
 use crate::Result;
 use aho_corasick::{AhoCorasick, MatchKind};
 use ouroboros::self_referencing;
+use std::collections::HashMap;
+use std::path::Path;
 
 pub type Pieces = HashMap<Vec<u8>, (usize, String, usize)>;
 
@@ -85,13 +85,13 @@ impl<'a> Tokenize for Tokenizer<'a> {
     fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
         normalize(text, 0)
             .into_iter()
-            .flat_map(|s| self.process(s, alpha))
+            .flat_map(|s| self._tokenize(s, alpha))
             .collect()
     }
 }
 
 impl<'a> Tokenizer<'a> {
-    pub fn from_pieces(pieces: &'a Pieces) -> Self {
+    pub fn from_pieces(pieces: &'a Pieces) -> Result<Self> {
         let piece_to_id: HashMap<&[u8], usize> = pieces
             .iter()
             .map(|(key, value)| (key.as_slice(), value.0))
@@ -112,19 +112,18 @@ impl<'a> Tokenizer<'a> {
 
         let ac = AhoCorasick::builder()
             .match_kind(MatchKind::Standard)
-            .build(pieces.keys())
-            .unwrap();
+            .build(pieces.keys())?;
 
-        Self {
+        Ok(Self {
             id_to_piece,
             piece_to_id,
             vocab_size,
             values,
             ac,
-        }
+        })
     }
 
-    fn process<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
+    fn _tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
         let mut scores = vec![-std::f64::INFINITY; text.len() + 1];
         scores[0] = 0.0;
 
@@ -165,6 +164,7 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
+#[inline]
 fn sigmoid(x: f64) -> f64 {
     if x >= 0. {
         1. / (1. + (-x).exp())
@@ -199,20 +199,19 @@ impl Tokenize for OwnedTokenizer {
     }
 }
 
-pub fn make_owned_tokenizer(pieces: Pieces) -> OwnedTokenizer {
-    let tokenizer = OwnedTokenizerBuilder {
+pub fn make_owned_tokenizer(pieces: Pieces) -> Result<OwnedTokenizer> {
+    OwnedTokenizerTryBuilder {
         pieces,
         tokenizer_builder: |pieces: &Pieces| Tokenizer::from_pieces(pieces),
     }
-    .build();
-    tokenizer
+    .try_build()
 }
 
 impl OwnedTokenizer {
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self> {
         let buf = std::fs::read(path)?;
         let pieces = parse_pieces_from_slice(&buf)?;
-        Ok(make_owned_tokenizer(pieces))
+        make_owned_tokenizer(pieces)
     }
 }
 

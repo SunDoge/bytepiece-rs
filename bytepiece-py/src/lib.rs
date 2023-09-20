@@ -1,7 +1,10 @@
+mod error;
 mod tokenizer;
 
 use pyo3::prelude::*;
 use tokenizer::Tokenizer;
+
+pub use error::{Error, Result};
 
 /// A Python module implemented in Rust.
 #[pymodule]
