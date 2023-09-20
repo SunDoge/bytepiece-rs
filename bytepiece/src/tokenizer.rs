@@ -25,11 +25,11 @@ pub trait Tokenize {
     fn vocab_size(&self) -> usize;
 
     fn pieces_to_ids(&self, pieces: &[&str]) -> Vec<usize> {
-        pieces.into_iter().map(|p| self.piece_to_id(*p)).collect()
+        pieces.iter().map(|p| self.piece_to_id(p)).collect()
     }
 
     fn ids_to_pieces(&self, ids: &[usize]) -> Vec<&str> {
-        ids.into_iter().map(|i| self.id_to_piece(*i)).collect()
+        ids.iter().map(|i| self.id_to_piece(*i)).collect()
     }
 
     fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
@@ -53,7 +53,7 @@ pub trait Tokenize {
 
     fn decode(&self, ids: &[usize]) -> String {
         let pieces: Vec<&str> = ids
-            .into_iter()
+            .iter()
             .filter(|i| **i > 2)
             .map(|i| self.id_to_piece(*i))
             .collect();
@@ -138,10 +138,8 @@ impl<'a> Tokenizer<'a> {
 
             let score = scores[start] + value;
 
-            if alpha <= 0.0 && score > scores[end] {
-                scores[end] = score;
-                routes[end] = start;
-            } else if alpha > 0.0 && rand::random::<f64>() < sigmoid((score - scores[end]) * alpha)
+            if (alpha <= 0.0 && score > scores[end])
+                || (alpha > 0.0 && rand::random::<f64>() < sigmoid((score - scores[end]) * alpha))
             {
                 scores[end] = score;
                 routes[end] = start;

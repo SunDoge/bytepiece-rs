@@ -1,6 +1,6 @@
-pub const PAD: &'static str = "<pad>";
-pub const BOS: &'static str = "<bos>";
-pub const EOS: &'static str = "<eos>";
+pub const PAD: &str = "<pad>";
+pub const BOS: &str = "<bos>";
+pub const EOS: &str = "<eos>";
 
 #[derive(Debug)]
 #[repr(usize)]

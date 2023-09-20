@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-pub fn normalize<'a>(text: &'a str, max_len: usize) -> Vec<&'a str> {
+pub fn normalize(text: &str, max_len: usize) -> Vec<&str> {
     if max_len > 0 {
         let pattern = format!(
             r".{{,{max_len}}}\n{{1,100}}|.{{1,{max_len}}}",
