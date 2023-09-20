@@ -2,7 +2,7 @@ use std::{collections::HashMap, ops::AddAssign};
 
 pub struct Trainer {
     order: usize,
-    max_vocab_size: usize,
+    max_vocab_size: Vec<usize>,
     max_piece_length: usize,
     min_count: usize,
 }
@@ -11,7 +11,7 @@ impl Default for Trainer {
     fn default() -> Self {
         Self {
             order: 6,
-            max_vocab_size: 10000,
+            max_vocab_size: vec![10000],
             max_piece_length: 36,
             min_count: 2,
         }
@@ -21,13 +21,13 @@ impl Default for Trainer {
 impl Trainer {
     pub fn new(
         order: usize,
-        max_vocab_size: usize,
+        max_vocab_size: &[usize],
         max_piece_length: usize,
         min_count: usize,
     ) -> Self {
         Self {
             order,
-            max_vocab_size,
+            max_vocab_size: max_vocab_size.to_vec(),
             max_piece_length,
             min_count,
         }

@@ -123,10 +123,11 @@ impl<'a> Tokenizer<'a> {
         })
     }
 
-    fn _tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
+    fn _tokenize<'s>(&self, text: &'s str, alpha: f64) -> impl Iterator<Item = &'s str> {
+        // Every ending's max score.
         let mut scores = vec![-std::f64::INFINITY; text.len() + 1];
         scores[0] = 0.0;
-
+        // Every ending's start. 
         let mut routes: Vec<usize> = (0..text.len() + 1).collect();
 
         for mat in self.ac.find_overlapping_iter(text.as_bytes()) {
@@ -157,8 +158,7 @@ impl<'a> Tokenizer<'a> {
             text_slice = &text[..start];
             end = start;
         }
-        tokens.reverse();
-        tokens
+        tokens.into_iter().rev()
     }
 }
 
