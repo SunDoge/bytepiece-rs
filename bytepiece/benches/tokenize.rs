@@ -10,10 +10,10 @@ fn bench_bytepiece_rs(c: &mut Criterion, text: &str) {
     use bytepiece_rs::Tokenizer;
     let tokenizer = Tokenizer::load_from("../bytepiece_80k.model");
     c.bench_function("bytepiece_rs tokenize", |b| {
-        b.iter(|| tokenizer.tokenize(text, -1.0))
+        b.iter(|| tokenizer.tokenize(text, -1.0, true))
     });
     c.bench_function("bytepiece_rs encode", |b| {
-        b.iter(|| tokenizer.encode(text, false, false, -1.0))
+        b.iter(|| tokenizer.encode(text, false, false, -1.0, true))
     });
 }
 
