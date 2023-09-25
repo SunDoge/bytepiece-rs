@@ -1,6 +1,6 @@
 use crate::Result;
 use bytepiece::tokenizer::{
-    make_owned_tokenizer, parse_pieces_from_slice, OwnedTokenizer, Pieces, Tokenize,
+    make_owned_tokenizer, OwnedTokenizer, Pieces, Tokenize,
 };
 use pyo3::prelude::*;
 use pyo3::types::PyType;
