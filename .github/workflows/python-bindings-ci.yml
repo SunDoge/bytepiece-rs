@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: bytepiece-py/dist
 
   windows:
     runs-on: windows-latest
@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: bytepiece-py/dist
 
   macos:
     runs-on: macos-latest
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: bytepiece-py/dist
 
   sdist:
     runs-on: ubuntu-20.04
@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: bytepiece-py/dist
 
   release:
     name: Release
