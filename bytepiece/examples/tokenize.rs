@@ -1,7 +1,14 @@
 use bytepiece::tokenizer::{parse_pieces_from_slice, Tokenize, Tokenizer};
+use std::path::PathBuf;
+
+fn get_model_path(path: &str) -> PathBuf {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    dbg!(&root.display());
+    root.join(path)
+}
 
 fn main() -> bytepiece::Result<()> {
-    let buf = std::fs::read("../bytepiece_80k.model").unwrap();
+    let buf = std::fs::read(get_model_path("../models/bytepiece_80k.model")).unwrap();
     let pieces = parse_pieces_from_slice(&buf)?;
     let tokenizer = Tokenizer::from_pieces(&pieces)?;
 

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 
 const TEXT: &'static str = r#"
@@ -6,9 +8,17 @@ BytePiece是一个Byte-based的Unigram分词器，纯Python实现，更加易读
 此外，它直接操作文本的UTF-8 Bytes，几乎不进行任何的预处理，所以更加纯粹和语言无关。
 "#;
 
+const MODEL_PATH: &str = "../models/bytepiece_80k.model";
+
+fn get_model_path(path: &str) -> PathBuf {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    dbg!(&root.display());
+    root.join(path)
+}
+
 fn bench_bytepiece_rs(c: &mut Criterion, text: &str) {
     use bytepiece_rs::Tokenizer;
-    let tokenizer = Tokenizer::load_from("../bytepiece_80k.model");
+    let tokenizer = Tokenizer::load_from(get_model_path(MODEL_PATH).to_str().unwrap());
     c.bench_function("bytepiece_rs tokenize", |b| {
         b.iter(|| tokenizer.tokenize(text, -1.0, true))
     });
@@ -19,7 +29,7 @@ fn bench_bytepiece_rs(c: &mut Criterion, text: &str) {
 
 fn bench_bytepiece(c: &mut Criterion, text: &str) {
     use bytepiece::prelude::*;
-    let tokenizer = OwnedTokenizer::from_path("../bytepiece_80k.model").unwrap();
+    let tokenizer = OwnedTokenizer::from_path(get_model_path(MODEL_PATH)).unwrap();
     c.bench_function("bytepiece tokenize", |b| {
         b.iter(|| tokenizer.tokenize(text, -1.0))
     });
