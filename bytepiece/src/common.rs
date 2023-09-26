@@ -1,6 +1,6 @@
-pub const PAD: &str = "<pad>";
-pub const BOS: &str = "<bos>";
-pub const EOS: &str = "<eos>";
+pub const PAD: &[u8] = b"<pad>";
+pub const BOS: &[u8] = b"<bos>";
+pub const EOS: &[u8] = b"<eos>";
 
 #[derive(Debug)]
 #[repr(usize)]

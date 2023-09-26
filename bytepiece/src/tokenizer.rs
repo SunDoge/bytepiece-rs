@@ -1,6 +1,6 @@
 use super::common::SpatialToken;
 use super::utils::normalize;
-use crate::Result;
+use crate::{common, Result};
 use aho_corasick::{AhoCorasick, MatchKind};
 use ouroboros::self_referencing;
 use std::collections::HashMap;
@@ -99,8 +99,11 @@ impl<'a> Tokenizer<'a> {
             .map(|(key, value)| (key.as_slice(), value.0))
             .collect();
 
-        let id_to_piece: HashMap<usize, &[u8]> =
+        let mut id_to_piece: HashMap<usize, &[u8]> =
             piece_to_id.iter().map(|(k, v)| (*v, *k)).collect();
+        id_to_piece.insert(SpatialToken::Pad as usize, common::PAD);
+        id_to_piece.insert(SpatialToken::Bos as usize, common::BOS);
+        id_to_piece.insert(SpatialToken::Eos as usize, common::EOS);
 
         let vocab_size = pieces.len() + 3;
 
