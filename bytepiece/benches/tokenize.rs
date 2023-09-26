@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use bytepiece::Tokenize;
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 const TEXT: &'static str = r#"
 BytePiece是一个Byte-based的Unigram分词器，纯Python实现，更加易读和易拓展。
@@ -38,9 +39,32 @@ fn bench_bytepiece(c: &mut Criterion, text: &str) {
     });
 }
 
+fn bench_tokenize(c: &mut Criterion, text: &str) {
+    let model_path = get_model_path(MODEL_PATH);
+    let t1 = bytepiece_rs::Tokenizer::load_from(model_path.to_str().unwrap());
+    let t2 = bytepiece::tokenizer::OwnedTokenizer::from_path(&model_path).unwrap();
+
+    let mut group = c.benchmark_group("Tokenize");
+    group.bench_function(BenchmarkId::new("bytepiece_rs", text), |b| {
+        b.iter(|| t1.tokenize(text, -1.0, true))
+    });
+    group.bench_function(BenchmarkId::new("bytepiece", text), |b| {
+        b.iter(|| t2.tokenize(text, -1.0))
+    });
+    group.finish();
+
+    let mut group = c.benchmark_group("Encode");
+    group.bench_function(BenchmarkId::new("bytepiece_rs", text), |b| {
+        b.iter(|| t1.encode(text, false, false, -1.0, true))
+    });
+    group.bench_function(BenchmarkId::new("bytepiece", text), |b| {
+        b.iter(|| t2.encode(text, false, false, -1.0))
+    });
+    group.finish();
+}
+
 fn criterion_benchmark(c: &mut Criterion) {
-    bench_bytepiece_rs(c, TEXT);
-    bench_bytepiece(c, TEXT);
+    bench_tokenize(c, TEXT);
 }
 
 criterion_group!(benches, criterion_benchmark);
