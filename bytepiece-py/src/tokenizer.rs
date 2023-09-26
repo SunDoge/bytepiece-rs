@@ -30,11 +30,8 @@ impl Tokenizer {
 
     #[pyo3(signature = (text, alpha = -1.0))]
     pub fn tokenize<'py>(&self, py: Python<'py>, text: &str, alpha: f64) -> Vec<&'py PyBytes> {
-        self.inner
-            .tokenize(text, alpha)
-            .iter()
-            .map(|bs| PyBytes::new(py, *bs))
-            .collect()
+        let tokens = py.allow_threads(|| self.inner.tokenize(text, alpha));
+        tokens.into_iter().map(|bs| PyBytes::new(py, bs)).collect()
     }
 
     #[pyo3(signature = (text, add_bos = false, add_eos = false, alpha = -1.0))]
