@@ -1,6 +1,6 @@
 [package]
 name = "bytepiece"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["SunDoge <384813529@qq.com>"]
 description = "Rust version of bytepiece tokenizer"
@@ -21,9 +21,8 @@ ouroboros = "0.18.0"
 rand = "0.8.5"
 regex = "1.9"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.107"
-thiserror = "1.0.48"
-unicode-normalization = "0.1.22"
+serde_json = "1.0"
+thiserror = "1.0"
 
 
 [features]

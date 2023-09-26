@@ -1,9 +1,8 @@
 use crate::Result;
-use bytepiece::tokenizer::{
-    make_owned_tokenizer, OwnedTokenizer, Pieces, Tokenize,
-};
+use bytepiece::tokenizer::{make_owned_tokenizer, OwnedTokenizer, Pieces, Tokenize};
 use pyo3::prelude::*;
-use pyo3::types::PyType;
+use pyo3::types::{PyBytes, PyType};
+use pyo3::Python;
 
 #[pyclass]
 pub struct Tokenizer {
@@ -29,33 +28,28 @@ impl Tokenizer {
         self.inner.vocab_size()
     }
 
-    pub fn id_to_piece(&self, id: usize) -> &str {
-        self.inner.id_to_piece(id)
-    }
-
-    pub fn piece_to_id(&self, p: &str) -> usize {
-        self.inner.piece_to_id(p)
-    }
-
     #[pyo3(signature = (text, alpha = -1.0))]
-    pub fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
-        self.inner.tokenize(text, alpha)
-    }
-
-    pub fn pieces_to_ids(&self, pieces: Vec<&str>) -> Vec<usize> {
-        self.inner.pieces_to_ids(&pieces)
-    }
-
-    pub fn ids_to_pieces(&self, ids: Vec<usize>) -> Vec<&str> {
-        self.inner.ids_to_pieces(&ids)
+    pub fn tokenize<'py>(&self, py: Python<'py>, text: &str, alpha: f64) -> Vec<&'py PyBytes> {
+        self.inner
+            .tokenize(text, alpha)
+            .iter()
+            .map(|bs| PyBytes::new(py, *bs))
+            .collect()
     }
 
     #[pyo3(signature = (text, add_bos = false, add_eos = false, alpha = -1.0))]
-    pub fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
-        self.inner.encode(text, add_bos, add_eos, alpha)
+    pub fn encode(
+        &self,
+        py: Python<'_>,
+        text: &str,
+        add_bos: bool,
+        add_eos: bool,
+        alpha: f64,
+    ) -> Vec<usize> {
+        py.allow_threads(|| self.inner.encode(text, add_bos, add_eos, alpha))
     }
 
-    pub fn decode(&self, ids: Vec<usize>) -> String {
-        self.inner.decode(&ids)
+    pub fn decode(&self, py: Python<'_>, ids: Vec<usize>) -> Result<String> {
+        py.allow_threads(|| Ok(self.inner.decode(&ids)?))
     }
 }
