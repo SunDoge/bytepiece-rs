@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use bytepiece::Tokenize;
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 const TEXT: &'static str = r#"
 BytePiece是一个Byte-based的Unigram分词器，纯Python实现，更加易读和易拓展。
@@ -17,47 +17,23 @@ fn get_model_path(path: &str) -> PathBuf {
     root.join(path)
 }
 
-fn bench_bytepiece_rs(c: &mut Criterion, text: &str) {
-    use bytepiece_rs::Tokenizer;
-    let tokenizer = Tokenizer::load_from(get_model_path(MODEL_PATH).to_str().unwrap());
-    c.bench_function("bytepiece_rs tokenize", |b| {
-        b.iter(|| tokenizer.tokenize(text, -1.0, true))
-    });
-    c.bench_function("bytepiece_rs encode", |b| {
-        b.iter(|| tokenizer.encode(text, false, false, -1.0, true))
-    });
-}
-
-fn bench_bytepiece(c: &mut Criterion, text: &str) {
-    use bytepiece::prelude::*;
-    let tokenizer = OwnedTokenizer::from_path(get_model_path(MODEL_PATH)).unwrap();
-    c.bench_function("bytepiece tokenize", |b| {
-        b.iter(|| tokenizer.tokenize(text, -1.0))
-    });
-    c.bench_function("bytepiece encode", |b| {
-        b.iter(|| tokenizer.encode(text, false, false, -1.0))
-    });
-}
-
 fn bench_tokenize(c: &mut Criterion, text: &str) {
     let model_path = get_model_path(MODEL_PATH);
     let t1 = bytepiece_rs::Tokenizer::load_from(model_path.to_str().unwrap());
     let t2 = bytepiece::tokenizer::OwnedTokenizer::from_path(&model_path).unwrap();
 
     let mut group = c.benchmark_group("Tokenize");
-    group.bench_function(BenchmarkId::new("bytepiece_rs", text), |b| {
-        b.iter(|| t1.tokenize(text, -1.0, true))
+    group.bench_function("bytepiece_rs", |b| {
+        b.iter(|| t1.tokenize(text, -1.0, false))
     });
-    group.bench_function(BenchmarkId::new("bytepiece", text), |b| {
-        b.iter(|| t2.tokenize(text, -1.0))
-    });
+    group.bench_function("bytepiece", |b| b.iter(|| t2.tokenize(text, -1.0)));
     group.finish();
 
     let mut group = c.benchmark_group("Encode");
-    group.bench_function(BenchmarkId::new("bytepiece_rs", text), |b| {
-        b.iter(|| t1.encode(text, false, false, -1.0, true))
+    group.bench_function("bytepiece_rs", |b| {
+        b.iter(|| t1.encode(text, false, false, -1.0, false))
     });
-    group.bench_function(BenchmarkId::new("bytepiece", text), |b| {
+    group.bench_function("bytepiece", |b| {
         b.iter(|| t2.encode(text, false, false, -1.0))
     });
     group.finish();

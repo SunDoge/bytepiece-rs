@@ -13,4 +13,7 @@ pub enum Error {
 
     #[error("fail to build aho corasick: {0}")]
     AhoCorasickBuild(#[from] aho_corasick::BuildError),
+
+    #[error("fail to parse bytes")]
+    FromUtf8(#[from] std::string::FromUtf8Error),
 }

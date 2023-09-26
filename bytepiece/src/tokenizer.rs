@@ -1,3 +1,4 @@
+use super::common::SpatialToken;
 use super::utils::normalize;
 use crate::Result;
 use aho_corasick::{AhoCorasick, MatchKind};
@@ -19,22 +20,22 @@ pub fn parse_pieces_from_slice(buf: &[u8]) -> Result<Pieces> {
 }
 
 pub trait Tokenize {
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str>;
-    fn piece_to_id(&self, p: &str) -> usize;
-    fn id_to_piece(&self, i: usize) -> &str;
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]>;
+    fn piece_to_id(&self, p: &[u8]) -> usize;
+    fn id_to_piece(&self, i: usize) -> &[u8];
     fn vocab_size(&self) -> usize;
 
-    fn pieces_to_ids(&self, pieces: &[&str]) -> Vec<usize> {
+    fn pieces_to_ids(&self, pieces: &[&[u8]]) -> Vec<usize> {
         pieces.iter().map(|p| self.piece_to_id(p)).collect()
     }
 
-    fn ids_to_pieces(&self, ids: &[usize]) -> Vec<&str> {
+    fn ids_to_pieces(&self, ids: &[usize]) -> Vec<&[u8]> {
         ids.iter().map(|i| self.id_to_piece(*i)).collect()
     }
 
     fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
         let mut pieces = if add_bos {
-            let mut pieces = vec![1];
+            let mut pieces = vec![SpatialToken::Bos as usize];
             for p in self.tokenize(text, alpha) {
                 pieces.push(self.piece_to_id(p));
             }
@@ -46,18 +47,18 @@ pub trait Tokenize {
                 .collect()
         };
         if add_eos {
-            pieces.push(2);
+            pieces.push(SpatialToken::Eos as usize);
         }
         pieces
     }
 
-    fn decode(&self, ids: &[usize]) -> String {
-        let pieces: Vec<&str> = ids
+    fn decode(&self, ids: &[usize]) -> Result<String> {
+        let piece: Vec<u8> = ids
             .iter()
             .filter(|i| **i > 2)
-            .map(|i| self.id_to_piece(*i))
+            .flat_map(|i| self.id_to_piece(*i).iter().copied())
             .collect();
-        pieces.join("")
+        Ok(String::from_utf8(piece)?)
     }
 }
 
@@ -70,20 +71,21 @@ pub struct Tokenizer<'a> {
 }
 
 impl<'a> Tokenize for Tokenizer<'a> {
-    fn id_to_piece(&self, i: usize) -> &str {
-        std::str::from_utf8(self.id_to_piece[&i]).unwrap()
+    fn id_to_piece(&self, i: usize) -> &[u8] {
+        self.id_to_piece[&i]
     }
 
-    fn piece_to_id(&self, p: &str) -> usize {
-        self.piece_to_id[p.as_bytes()]
+    fn piece_to_id(&self, p: &[u8]) -> usize {
+        self.piece_to_id[p]
     }
 
     fn vocab_size(&self) -> usize {
         self.vocab_size
     }
 
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
-        normalize(text, 0)
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]> {
+        // let nfc_text: String = text.nfc().collect();
+        normalize(text.as_bytes(), 0)
             .into_iter()
             .flat_map(|s| self._tokenize(s, alpha))
             .collect()
@@ -123,14 +125,14 @@ impl<'a> Tokenizer<'a> {
         })
     }
 
-    fn _tokenize<'s>(&self, text: &'s str, alpha: f64) -> impl Iterator<Item = &'s str> {
+    fn _tokenize<'s>(&self, text: &'s [u8], alpha: f64) -> impl Iterator<Item = &'s [u8]> {
         // Every ending's max score.
         let mut scores = vec![-std::f64::INFINITY; text.len() + 1];
         scores[0] = 0.0;
-        // Every ending's start. 
+        // Every ending's start.
         let mut routes: Vec<usize> = (0..text.len() + 1).collect();
 
-        for mat in self.ac.find_overlapping_iter(text.as_bytes()) {
+        for mat in self.ac.find_overlapping_iter(text) {
             let start = mat.start();
             let end = mat.end();
 
@@ -180,7 +182,7 @@ pub struct OwnedTokenizer {
 }
 
 impl Tokenize for OwnedTokenizer {
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s str> {
+    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]> {
         self.borrow_tokenizer().tokenize(text, alpha)
     }
 
@@ -188,11 +190,11 @@ impl Tokenize for OwnedTokenizer {
         self.borrow_tokenizer().vocab_size()
     }
 
-    fn id_to_piece(&self, i: usize) -> &str {
+    fn id_to_piece(&self, i: usize) -> &[u8] {
         self.borrow_tokenizer().id_to_piece(i)
     }
 
-    fn piece_to_id(&self, p: &str) -> usize {
+    fn piece_to_id(&self, p: &[u8]) -> usize {
         self.borrow_tokenizer().piece_to_id(p)
     }
 }
