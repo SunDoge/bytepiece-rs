@@ -10,4 +10,7 @@
 This project is a pure Rust implmementation of [BytePiece] algorithm and its [Python bindings](./bytepiece-py).
 
 
+We provide python bindings. You can download prebuilt wheels in [CI artifacts](https://github.com/SunDoge/bytepiece-rs/actions/workflows/python-bindings-ci.yml).
+
+
 [BytePiece]: https://github.com/bojone/bytepiece
