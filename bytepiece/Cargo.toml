@@ -1,6 +1,6 @@
 [package]
 name = "bytepiece"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["SunDoge <384813529@qq.com>"]
 description = "Rust version of bytepiece tokenizer"
