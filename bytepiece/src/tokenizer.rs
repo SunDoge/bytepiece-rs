@@ -20,7 +20,7 @@ pub fn parse_pieces_from_slice(buf: &[u8]) -> Result<Pieces> {
 }
 
 pub trait Tokenize {
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]>;
+    fn tokenize<'s, T: AsRef<[u8]>>(&self, text: &'s T, alpha: f64) -> Vec<&'s [u8]>;
     fn piece_to_id(&self, p: &[u8]) -> usize;
     fn id_to_piece(&self, i: usize) -> &[u8];
     fn vocab_size(&self) -> usize;
@@ -33,15 +33,21 @@ pub trait Tokenize {
         ids.iter().map(|i| self.id_to_piece(*i)).collect()
     }
 
-    fn encode(&self, text: &str, add_bos: bool, add_eos: bool, alpha: f64) -> Vec<usize> {
+    fn encode(
+        &self,
+        text: impl AsRef<[u8]>,
+        add_bos: bool,
+        add_eos: bool,
+        alpha: f64,
+    ) -> Vec<usize> {
         let mut pieces = if add_bos {
             let mut pieces = vec![SpatialToken::Bos as usize];
-            for p in self.tokenize(text, alpha) {
+            for p in self.tokenize(&text, alpha) {
                 pieces.push(self.piece_to_id(p));
             }
             pieces
         } else {
-            self.tokenize(text, alpha)
+            self.tokenize(&text, alpha)
                 .into_iter()
                 .map(|p| self.piece_to_id(p))
                 .collect()
@@ -83,9 +89,9 @@ impl<'a> Tokenize for Tokenizer<'a> {
         self.vocab_size
     }
 
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]> {
+    fn tokenize<'s, T: AsRef<[u8]>>(&self, text: &'s T, alpha: f64) -> Vec<&'s [u8]> {
         // let nfc_text: String = text.nfc().collect();
-        normalize(text.as_bytes(), 0)
+        normalize(text.as_ref(), 0)
             .into_iter()
             .flat_map(|s| self._tokenize(s, alpha))
             .collect()
@@ -185,7 +191,7 @@ pub struct OwnedTokenizer {
 }
 
 impl Tokenize for OwnedTokenizer {
-    fn tokenize<'s>(&self, text: &'s str, alpha: f64) -> Vec<&'s [u8]> {
+    fn tokenize<'s, T: AsRef<[u8]>>(&self, text: &'s T, alpha: f64) -> Vec<&'s [u8]> {
         self.borrow_tokenizer().tokenize(text, alpha)
     }
 

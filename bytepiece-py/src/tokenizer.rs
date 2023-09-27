@@ -5,12 +5,12 @@ use pyo3::types::{PyBytes, PyType};
 use pyo3::Python;
 
 #[pyclass]
-pub struct Tokenizer {
+pub struct _Tokenizer {
     inner: OwnedTokenizer,
 }
 
 #[pymethods]
-impl Tokenizer {
+impl _Tokenizer {
     #[new]
     fn new(pieces: Pieces) -> Result<Self> {
         Ok(Self {
@@ -29,8 +29,9 @@ impl Tokenizer {
     }
 
     #[pyo3(signature = (text, alpha = -1.0))]
-    pub fn tokenize<'py>(&self, py: Python<'py>, text: &str, alpha: f64) -> Vec<&'py PyBytes> {
-        let tokens = py.allow_threads(|| self.inner.tokenize(text, alpha));
+    pub fn tokenize<'py>(&self, py: Python<'py>, text: &PyBytes, alpha: f64) -> Vec<&'py PyBytes> {
+        let bs = text.as_bytes();
+        let tokens = py.allow_threads(|| self.inner.tokenize(&bs, alpha));
         tokens.into_iter().map(|bs| PyBytes::new(py, bs)).collect()
     }
 
@@ -38,12 +39,13 @@ impl Tokenizer {
     pub fn encode(
         &self,
         py: Python<'_>,
-        text: &str,
+        text: &PyBytes,
         add_bos: bool,
         add_eos: bool,
         alpha: f64,
     ) -> Vec<usize> {
-        py.allow_threads(|| self.inner.encode(text, add_bos, add_eos, alpha))
+        let bs = text.as_bytes();
+        py.allow_threads(|| self.inner.encode(bs, add_bos, add_eos, alpha))
     }
 
     pub fn decode(&self, py: Python<'_>, ids: Vec<usize>) -> Result<String> {
