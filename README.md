@@ -55,7 +55,7 @@ Found 12 outliers among 100 measurements (12.00%)
 ```shell
 python scripts/download_model.py
 cd bytepiece-py && maturin develop -r && cd ..
-python bytepiece-py/bench.py
+python scripts/bench.py
 ```
 
 ```

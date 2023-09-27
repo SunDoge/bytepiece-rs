@@ -26,7 +26,7 @@ fn bench_tokenize(c: &mut Criterion, text: &str) {
     group.bench_function("bytepiece_rs", |b| {
         b.iter(|| t1.tokenize(text, -1.0, false))
     });
-    group.bench_function("bytepiece", |b| b.iter(|| t2.tokenize(text, -1.0)));
+    group.bench_function("bytepiece", |b| b.iter(|| t2.tokenize(&text, -1.0)));
     group.finish();
 
     let mut group = c.benchmark_group("Encode");
