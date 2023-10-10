@@ -15,7 +15,7 @@ fn main() -> bytepiece::Result<()> {
     let text = "hi what is your name";
     dbg!(text);
 
-    let tokens = tokenizer.tokenize(text, -1.0);
+    let tokens = tokenizer.tokenize(&text, -1.0);
     dbg!(&tokens);
 
     let ids = tokenizer.encode(text, false, false, -1.0);

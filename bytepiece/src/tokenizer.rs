@@ -58,13 +58,13 @@ pub trait Tokenize {
         pieces
     }
 
-    fn decode(&self, ids: &[usize]) -> Result<String> {
+    fn decode(&self, ids: &[usize]) -> Result<Vec<u8>> {
         let piece: Vec<u8> = ids
             .iter()
             .filter(|i| **i > 2)
             .flat_map(|i| self.id_to_piece(*i).iter().copied())
             .collect();
-        Ok(String::from_utf8(piece)?)
+        Ok(piece)
     }
 }
 

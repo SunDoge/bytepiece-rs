@@ -48,7 +48,8 @@ impl _Tokenizer {
         py.allow_threads(|| self.inner.encode(bs, add_bos, add_eos, alpha))
     }
 
-    pub fn decode(&self, py: Python<'_>, ids: Vec<usize>) -> Result<String> {
-        py.allow_threads(|| Ok(self.inner.decode(&ids)?))
+    pub fn decode<'py>(&self, py: Python<'py>, ids: Vec<usize>) -> Result<&'py PyBytes> {
+        let res = py.allow_threads(|| self.inner.decode(&ids))?;
+        Ok(PyBytes::new(py, &res))
     }
 }
