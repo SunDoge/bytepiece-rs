@@ -1,8 +1,10 @@
 use super::common::SpatialToken;
 use super::utils::normalize;
+use crate::utils::logsumexp;
 use crate::{common, Result};
 use aho_corasick::{AhoCorasick, MatchKind};
 use ouroboros::self_referencing;
+use rand::random;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -148,13 +150,18 @@ impl<'a> Tokenizer<'a> {
             let index = mat.pattern().as_usize();
             let value = self.values[index];
 
-            let score = scores[start] + value;
-
-            if (alpha <= 0.0 && score > scores[end])
-                || (alpha > 0.0 && rand::random::<f64>() < sigmoid((score - scores[end]) * alpha))
-            {
-                scores[end] = score;
-                routes[end] = start;
+            if alpha < 0.0 {
+                let score = scores[start] + value;
+                if score > scores[end] {
+                    scores[end] = score;
+                    routes[end] = start;
+                }
+            } else {
+                let score = scores[start] + alpha * value;
+                scores[end] = logsumexp(scores[end], score);
+                if random::<f64>() < (score - scores[end]).exp() {
+                    routes[end] = start;
+                }
             }
         }
 
@@ -170,15 +177,6 @@ impl<'a> Tokenizer<'a> {
             end = start;
         }
         tokens.into_iter().rev()
-    }
-}
-
-#[inline]
-fn sigmoid(x: f64) -> f64 {
-    if x >= 0. {
-        1. / (1. + (-x).exp())
-    } else {
-        1. - 1. / (1. + x.exp())
     }
 }
 
