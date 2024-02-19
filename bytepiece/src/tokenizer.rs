@@ -4,7 +4,6 @@ use crate::utils::logsumexp;
 use crate::{common, Result};
 use aho_corasick::{AhoCorasick, MatchKind};
 use ouroboros::self_referencing;
-use rand::random;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -159,7 +158,7 @@ impl<'a> Tokenizer<'a> {
             } else {
                 let score = scores[start] + alpha * value;
                 scores[end] = logsumexp(scores[end], score);
-                if random::<f64>() < (score - scores[end]).exp() {
+                if fastrand::f64() < (score - scores[end]).exp() {
                     routes[end] = start;
                 }
             }
