@@ -1,5 +1,7 @@
 import unicodedata
 from typing import Dict, List, Tuple, Union
+from base64 import b64decode
+import json
 
 from . import bytepiece_py as _ext
 
@@ -38,3 +40,11 @@ class Tokenizer:
 
     def vocab_size(self) -> int:
         return self._tokenizer.vocab_size()
+
+    def piece_to_id(self, piece: Union[str, bytes]) -> int:
+        if isinstance(piece, str):
+            piece = piece.encode()
+        return self._tokenizer.piece_to_id(piece)
+
+    def id_to_piece(self, id: int) -> bytes:
+        return self._tokenizer.id_to_piece(id)
