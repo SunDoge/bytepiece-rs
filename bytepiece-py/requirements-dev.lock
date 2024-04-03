@@ -8,5 +8,4 @@
 #   with-sources: false
 
 -e file:.
-cython==3.0.10
 pip==24.0
