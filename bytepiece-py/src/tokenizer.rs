@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::error::Result;
 use bytepiece::tokenizer::{make_owned_tokenizer, OwnedTokenizer, Pieces, Tokenize};
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyType};
@@ -19,7 +19,7 @@ impl _Tokenizer {
     }
 
     #[classmethod]
-    fn from_path(_cls: &PyType, path: &str) -> Result<Self> {
+    fn from_path(_cls: &Bound<PyType>, path: &str) -> Result<Self> {
         let tk = OwnedTokenizer::from_path(path)?;
         Ok(Self { inner: tk })
     }
@@ -29,17 +29,25 @@ impl _Tokenizer {
     }
 
     #[pyo3(signature = (text, alpha = -1.0))]
-    pub fn tokenize<'py>(&self, py: Python<'py>, text: &PyBytes, alpha: f64) -> Vec<&'py PyBytes> {
+    pub fn tokenize<'py>(
+        &self,
+        py: Python<'py>,
+        text: &Bound<PyBytes>,
+        alpha: f64,
+    ) -> Vec<Bound<'py, PyBytes>> {
         let bs = text.as_bytes();
         let tokens = py.allow_threads(|| self.inner.tokenize(&bs, alpha));
-        tokens.into_iter().map(|bs| PyBytes::new(py, bs)).collect()
+        tokens
+            .into_iter()
+            .map(|bs| PyBytes::new_bound(py, bs))
+            .collect()
     }
 
     #[pyo3(signature = (text, add_bos = false, add_eos = false, alpha = -1.0))]
     pub fn encode(
         &self,
         py: Python<'_>,
-        text: &PyBytes,
+        text: &Bound<PyBytes>,
         add_bos: bool,
         add_eos: bool,
         alpha: f64,
@@ -48,16 +56,16 @@ impl _Tokenizer {
         py.allow_threads(|| self.inner.encode(bs, add_bos, add_eos, alpha))
     }
 
-    pub fn decode<'py>(&self, py: Python<'py>, ids: Vec<usize>) -> Result<&'py PyBytes> {
+    pub fn decode<'py>(&self, py: Python<'py>, ids: Vec<usize>) -> Result<Bound<'py, PyBytes>> {
         let res = py.allow_threads(|| self.inner.decode(&ids))?;
-        Ok(PyBytes::new(py, &res))
+        Ok(PyBytes::new_bound(py, &res))
     }
 
-    pub fn id_to_piece<'py>(&self, py: Python<'py>, id: usize) -> &'py PyBytes {
-        PyBytes::new(py, self.inner.id_to_piece(id))
+    pub fn id_to_piece<'py>(&self, py: Python<'py>, id: usize) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, self.inner.id_to_piece(id))
     }
 
-    pub fn piece_to_id(&self, piece: &PyBytes) -> usize {
+    pub fn piece_to_id(&self, piece: &Bound<PyBytes>) -> usize {
         self.inner.piece_to_id(piece.as_bytes())
     }
 }
