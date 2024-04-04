@@ -1,9 +1,7 @@
 import unicodedata
 from typing import Dict, List, Tuple, Union
-from base64 import b64decode
-import json
 
-from . import bytepiece_py as _ext
+from bytepiece_py import _lowlevel
 
 
 def normalize(text: str) -> bytes:
@@ -13,9 +11,9 @@ def normalize(text: str) -> bytes:
 class Tokenizer:
     def __init__(self, pieces: Union[str, Dict[str, Tuple[str, int, str]]]) -> None:
         if isinstance(pieces, str):
-            self._tokenizer = _ext._Tokenizer.from_path(pieces)
+            self._tokenizer = _lowlevel._Tokenizer.from_path(pieces)
         else:
-            self._tokenizer = _ext._Tokenizer(pieces)
+            self._tokenizer = _lowlevel._Tokenizer(pieces)
 
     def encode(
         self,
