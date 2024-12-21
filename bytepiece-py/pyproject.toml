@@ -21,4 +21,5 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "maturin>=1.7.8",
+    "rs-bytepiece>=0.2.2",
 ]

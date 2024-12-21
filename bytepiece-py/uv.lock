@@ -3,18 +3,22 @@ requires-python = ">=3.8"
 
 [[package]]
 name = "bytepiece-py"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
     { name = "maturin" },
+    { name = "rs-bytepiece" },
 ]
 
 [package.metadata]
 
 [package.metadata.requires-dev]
-dev = [{ name = "maturin", specifier = ">=1.7.8" }]
+dev = [
+    { name = "maturin", specifier = ">=1.7.8" },
+    { name = "rs-bytepiece", specifier = ">=0.2.2" },
+]
 
 [[package]]
 name = "maturin"
@@ -37,6 +41,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/82/5080e052c0d8c9872f6d4b94cae84c17ed7f2ea270d709210ea6445b655f/maturin-1.7.8-py3-none-win32.whl", hash = "sha256:403eebf1afa6f19b49425f089e39c53b8e597bc86a47f3a76e828dc78d27fa80", size = 6845240 },
     { url = "https://files.pythonhosted.org/packages/6d/c9/9b162361ded893f36038c2f8ac6a972ec441c11df8d17c440997eb28090f/maturin-1.7.8-py3-none-win_amd64.whl", hash = "sha256:1ce48d007438b895f8665314b6748ac0dab31e4f32049a60b52281dd2dccbdde", size = 7762332 },
     { url = "https://files.pythonhosted.org/packages/fa/40/46d4742db742f69a7fe0054cd7c82bc79b2d70cb8c91f7e737e75c28a5f3/maturin-1.7.8-py3-none-win_arm64.whl", hash = "sha256:cc92a62953205e8945b6cfe6943d6a8576a4442d30d9c67141f944f4f4640e62", size = 6501353 },
+]
+
+[[package]]
+name = "rs-bytepiece"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/22/b6bbac87677550e256e049e97b2cc4a75aa33bd12bb81ac7c4709d407178/rs_bytepiece-0.2.2.tar.gz", hash = "sha256:f86206004808f118d7581fe314387c6d0c45566cd34fda346c439c3392e912cd", size = 1241456 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/63/809ac38242cf82098144777c8f82a94290d15aa04f9c45dbb57da7a78be8/rs_bytepiece-0.2.2-cp37-abi3-macosx_10_7_x86_64.whl", hash = "sha256:14338a8c8573df2ac4dc83567a58722d18984f678ce3426237d58e689288df1d", size = 2295816 },
+    { url = "https://files.pythonhosted.org/packages/14/61/0a22cb90c845829383640d2a9ef17ab0286e9cef9189b7346194b5df2b72/rs_bytepiece-0.2.2-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2405a38e0a03985fabeb025eae65fcafcf5aae7c5f9b065c10cc17b72ae5e723", size = 3463328 },
+    { url = "https://files.pythonhosted.org/packages/62/30/dea969abe55a7cf936c69b32b5ddda7eb09687300be9fa8923535da0d9f6/rs_bytepiece-0.2.2-cp37-abi3-win_amd64.whl", hash = "sha256:2e6a9f8b78bc24d4856b00240c82392ebe6008b110ba482e22c00f48f81b4e6c", size = 3819501 },
 ]
 
 [[package]]
