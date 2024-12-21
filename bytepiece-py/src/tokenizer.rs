@@ -37,10 +37,7 @@ impl _Tokenizer {
     ) -> Vec<Bound<'py, PyBytes>> {
         let bs = text.as_bytes();
         let tokens = py.allow_threads(|| self.inner.tokenize(&bs, alpha));
-        tokens
-            .into_iter()
-            .map(|bs| PyBytes::new_bound(py, bs))
-            .collect()
+        tokens.into_iter().map(|bs| PyBytes::new(py, bs)).collect()
     }
 
     #[pyo3(signature = (text, add_bos = false, add_eos = false, alpha = -1.0))]
@@ -58,11 +55,11 @@ impl _Tokenizer {
 
     pub fn decode<'py>(&self, py: Python<'py>, ids: Vec<usize>) -> Result<Bound<'py, PyBytes>> {
         let res = py.allow_threads(|| self.inner.decode(&ids))?;
-        Ok(PyBytes::new_bound(py, &res))
+        Ok(PyBytes::new(py, &res))
     }
 
     pub fn id_to_piece<'py>(&self, py: Python<'py>, id: usize) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.inner.id_to_piece(id))
+        PyBytes::new(py, self.inner.id_to_piece(id))
     }
 
     pub fn piece_to_id(&self, piece: &Bound<PyBytes>) -> usize {

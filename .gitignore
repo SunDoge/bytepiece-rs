@@ -3,3 +3,5 @@
 *.model
 *.zip
 .vscode/
+__pycache__/
+*.so
