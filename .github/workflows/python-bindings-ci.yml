@@ -32,7 +32,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --uv
+          args: --release --out dist --find-interpreter
           sccache: 'true'
           manylinux: auto
           working-directory: "bytepiece-py"
@@ -57,7 +57,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --uv
+          args: --release --out dist --find-interpreter
           sccache: 'true'
           working-directory: "bytepiece-py"
       - name: Upload wheels
@@ -80,7 +80,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --uv
+          args: --release --out dist --find-interpreter
           sccache: 'true'
           working-directory: "bytepiece-py"
       - name: Upload wheels
@@ -97,7 +97,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist --uv
+          args: --out dist
           working-directory: "bytepiece-py"
       - name: Upload sdist
         uses: actions/upload-artifact@v3
@@ -120,4 +120,4 @@ jobs:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
-          args: --skip-existing * --uv
+          args: --skip-existing *
