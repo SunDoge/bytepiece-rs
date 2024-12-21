@@ -1,28 +1,25 @@
 [project]
 name = "bytepiece-py"
-version = "0.2.1"
+version = "0.1.1"
 description = "Add your description here"
+readme = "README.md"
 authors = [
     { name = "SunDoge", email = "triplez0@outlook.com" }
 ]
+requires-python = ">=3.8"
 dependencies = []
-readme = "README.md"
-requires-python = ">= 3.8"
-
-[build-system]
-requires = ["maturin>=1.2,<2.0"]
-build-backend = "maturin"
-
-[tool.rye]
-managed = true
-dev-dependencies = [
-    "pip>=24.0",
-]
 
 [tool.maturin]
-python-source = "python"
-module-name = "bytepiece_py._lowlevel"
-features = ["pyo3/extension-module"]
+module-name = "bytepiece_py._core"
+python-packages = ["bytepiece_py"]
+python-source = "src"
 
-[tool.rye.scripts]
-dev = "maturin develop --skip-install"
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[dependency-groups]
+dev = [
+    "maturin>=1.7.8",
+    "rs-bytepiece>=0.2.2",
+]
