@@ -1,9 +1,9 @@
-use std::path::PathBuf;
+use std::{hint::black_box, path::PathBuf};
 
 use bytepiece::Tokenize;
 use criterion::{criterion_group, criterion_main, Criterion};
 
-const TEXT: &'static str = r#"
+const TEXT: &str = r#"
 BytePiece是一个Byte-based的Unigram分词器，纯Python实现，更加易读和易拓展。
 由于采用了新的训练算法，所以压缩率通常比现有Tokenizer更高，同时支持多进程加速训练。
 此外，它直接操作文本的UTF-8 Bytes，几乎不进行任何的预处理，所以更加纯粹和语言无关。
@@ -13,7 +13,6 @@ const MODEL_PATH: &str = "../models/bytepiece_80k.model";
 
 fn get_model_path(path: &str) -> PathBuf {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    dbg!(&root.display());
     root.join(path)
 }
 
@@ -26,7 +25,9 @@ fn bench_tokenize(c: &mut Criterion, text: &str) {
     group.bench_function("bytepiece_rs", |b| {
         b.iter(|| t1.tokenize(text, -1.0, false))
     });
-    group.bench_function("bytepiece", |b| b.iter(|| t2.tokenize(&text, -1.0)));
+    group.bench_function("bytepiece", |b| {
+        b.iter(|| t2.tokenize(black_box(&text), -1.0))
+    });
     group.finish();
 
     let mut group = c.benchmark_group("Encode");
@@ -34,7 +35,7 @@ fn bench_tokenize(c: &mut Criterion, text: &str) {
         b.iter(|| t1.encode(text, false, false, -1.0, false))
     });
     group.bench_function("bytepiece", |b| {
-        b.iter(|| t2.encode(text, false, false, -1.0))
+        b.iter(|| t2.encode(black_box(text), false, false, -1.0))
     });
     group.finish();
 }

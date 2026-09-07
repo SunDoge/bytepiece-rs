@@ -1,0 +1,45 @@
+name: Rust and Wasm CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: rustup update stable && rustup default stable
+      - run: rustup component add rustfmt clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-bindgen-cli --version 0.2.128 --locked
+      - run: scripts/build_wasm.sh
+      - run: node scripts/test_wasm.mjs
+      - name: Prepare upstream comparison
+        run: |
+          pip install maturin numpy tqdm cython setuptools wheel requests
+          AHOCORASICK_BYTES=1 pip install --no-binary pyahocorasick pyahocorasick
+          pip install --no-build-isolation bytepiece==0.6.3
+          python scripts/download_model.py
+          maturin build --manifest-path bytepiece-py/Cargo.toml --release --locked --out target/wheels
+          pip install target/wheels/*.whl
+      - run: python scripts/check_upstream.py
+      - run: node scripts/test_wasm.mjs --upstream
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bytepiece-wasm
+          path: bytepiece-wasm/pkg-*

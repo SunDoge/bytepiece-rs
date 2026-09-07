@@ -1,7 +1,7 @@
 /target
-/Cargo.lock
 *.model
 *.zip
 .vscode/
 __pycache__/
 *.so
+/bytepiece-wasm/pkg*/

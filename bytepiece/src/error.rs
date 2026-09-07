@@ -2,6 +2,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid model: {0}")]
+    InvalidModel(String),
+
+    #[error("unknown token ID: {0}")]
+    UnknownId(usize),
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 

@@ -4,8 +4,11 @@
 
 [workspace]
 resolver = "2"
-members = ["bytepiece", "bytepiece-py"]
+members = ["bytepiece", "bytepiece-py", "bytepiece-wasm"]
 
 
 [workspace.dependencies]
 bytepiece = { path = "bytepiece" }
+
+[profile.release]
+lto = "thin"
