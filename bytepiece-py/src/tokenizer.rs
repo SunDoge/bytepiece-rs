@@ -36,7 +36,7 @@ impl _Tokenizer {
         alpha: f64,
     ) -> Vec<Bound<'py, PyBytes>> {
         let bs = text.as_bytes();
-        let tokens = py.allow_threads(|| self.inner.tokenize(&bs, alpha));
+        let tokens = py.detach(|| self.inner.tokenize(&bs, alpha));
         tokens.into_iter().map(|bs| PyBytes::new(py, bs)).collect()
     }
 
@@ -50,11 +50,11 @@ impl _Tokenizer {
         alpha: f64,
     ) -> Vec<usize> {
         let bs = text.as_bytes();
-        py.allow_threads(|| self.inner.encode(bs, add_bos, add_eos, alpha))
+        py.detach(|| self.inner.encode(bs, add_bos, add_eos, alpha))
     }
 
     pub fn decode<'py>(&self, py: Python<'py>, ids: Vec<usize>) -> Result<Bound<'py, PyBytes>> {
-        let res = py.allow_threads(|| self.inner.decode(&ids))?;
+        let res = py.detach(|| self.inner.decode(&ids))?;
         Ok(PyBytes::new(py, &res))
     }
 

@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "SunDoge", email = "triplez0@outlook.com" }
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = []
 
 [tool.maturin]
@@ -15,11 +15,11 @@ python-packages = ["bytepiece_py"]
 python-source = "src"
 
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
+requires = ["maturin>=1.15,<2.0"]
 build-backend = "maturin"
 
 [dependency-groups]
 dev = [
-    "maturin>=1.7.8",
+    "maturin>=1.15",
     "rs-bytepiece>=0.2.2",
 ]
